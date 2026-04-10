@@ -483,7 +483,7 @@ def main() -> None:
         st.markdown("## Triple-Star + Planet Motion Simulator")
     with action_col:
         st.write("")
-        run_clicked = st.button("Run / Advance")
+        run_clicked = st.button("Run")
 
     st.write(
         "A 2D Newtonian 4-body prototype with three stars, one planet, live trajectories, "
