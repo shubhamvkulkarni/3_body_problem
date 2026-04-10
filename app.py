@@ -461,13 +461,32 @@ def render_state_panel(container, bodies: List[Body], current_time: float) -> No
 def position_editor_fallback(positions: Dict[str, np.ndarray]) -> Dict[str, np.ndarray]:
     st.caption("Set the initial positions for each body.")
     updated = {}
-    for name in ["Star 1", "Star 2", "Star 3", "Planet"]:
-        c1, c2 = st.columns(2)
-        with c1:
-            x = st.number_input(f"{name} x [AU]", value=float(positions[name][0]), step=0.05, key=f"{name}_x")
-        with c2:
-            y = st.number_input(f"{name} y [AU]", value=float(positions[name][1]), step=0.05, key=f"{name}_y")
-        updated[name] = _vec(x, y)
+    names = ["Star 1", "Star 2", "Star 3", "Planet"]
+    x_values: Dict[str, float] = {}
+    y_values: Dict[str, float] = {}
+
+    x_cols = st.columns(4)
+    for col, name in zip(x_cols, names):
+        with col:
+            x_values[name] = st.number_input(
+                f"{name} x [AU]",
+                value=float(positions[name][0]),
+                step=0.05,
+                key=f"{name}_x",
+            )
+
+    y_cols = st.columns(4)
+    for col, name in zip(y_cols, names):
+        with col:
+            y_values[name] = st.number_input(
+                f"{name} y [AU]",
+                value=float(positions[name][1]),
+                step=0.05,
+                key=f"{name}_y",
+            )
+
+    for name in names:
+        updated[name] = _vec(x_values[name], y_values[name])
     return updated
 
 
