@@ -367,7 +367,7 @@ def build_bodies_from_ui(
 
 
 def position_editor_fallback(positions: Dict[str, np.ndarray]) -> Dict[str, np.ndarray]:
-    st.caption("Initial positions are editable here. A drag-and-drop canvas can be plugged in later.")
+    st.caption("Set the initial positions for each body.")
     updated = {}
     for name in ["Star 1", "Star 2", "Star 3", "Planet"]:
         c1, c2 = st.columns(2)
@@ -421,7 +421,6 @@ def main() -> None:
             st.session_state.positions = st.session_state.positions.copy()
 
     st.subheader("Initial positions")
-    st.info("Replace this section later with a draggable canvas component. The app will use the same position dictionary.")
 
     st.session_state.positions = position_editor_fallback(st.session_state.positions)
 
@@ -481,9 +480,9 @@ def main() -> None:
 
         st.subheader("Notes")
         st.markdown(
-            "- The current osculating orbit overlay is a two-body approximation around a chosen reference center.\n"
-            "- The backend is set up so you can later replace the fallback integrator with REBOUND/IAS15.\n"
-            "- The initial velocity heuristic is only for starting configurations; you can refine it in the physics backend."
+            "- The osculating orbit overlay is a two-body approximation around a chosen reference center.\n"
+            "- The simulation uses a leapfrog integrator for the current 4-body system.\n"
+            "- The initial velocity field is a heuristic starting configuration."
         )
 
 
