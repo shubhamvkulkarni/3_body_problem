@@ -478,7 +478,13 @@ def main() -> None:
     st.set_page_config(page_title="Triple-Star + Planet Simulator", layout="wide")
     init_state()
 
-    st.title("Triple-Star + Planet Motion Simulator")
+    header_col, action_col = st.columns([5, 1])
+    with header_col:
+        st.markdown("## Triple-Star + Planet Motion Simulator")
+    with action_col:
+        st.write("")
+        run_clicked = st.button("Run / Advance")
+
     st.write(
         "A 2D Newtonian 4-body prototype with three stars, one planet, live trajectories, "
         "and approximate osculating orbit overlays."
@@ -525,8 +531,6 @@ def main() -> None:
 
     plot_col, state_col = st.columns([2, 1])
     plot_placeholder = plot_col.empty()
-    with state_col:
-        run_clicked = st.button("Run / Advance")
     state_placeholder = state_col.empty()
 
     if run_clicked:
