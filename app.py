@@ -478,31 +478,9 @@ def main() -> None:
     st.set_page_config(page_title="Triple-Star + Planet Simulator", layout="wide")
     init_state()
 
-    st.markdown(
-        """
-        <style>
-        @media (max-width: 640px) {
-            div[data-testid="stHorizontalBlock"]:first-of-type {
-                flex-wrap: nowrap;
-                align-items: center;
-            }
-
-            div[data-testid="stHorizontalBlock"]:first-of-type > div {
-                min-width: 0 !important;
-            }
-
-            div[data-testid="stHorizontalBlock"]:first-of-type button {
-                white-space: nowrap;
-            }
-        }
-        </style>
-        """,
-        unsafe_allow_html=True,
-    )
-
     header_col, run_col, reset_col = st.columns([7, 1, 1], gap="small")
     with header_col:
-        st.title("Triple-Star + Planet Motion Simulator")
+        st.markdown("## Triple-Star + Planet Motion Simulator")
     with run_col:
         st.write("")
         run_clicked = st.button("Run")
