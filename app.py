@@ -484,10 +484,6 @@ def main() -> None:
         else:
             st.session_state.positions = st.session_state.positions.copy()
 
-    st.subheader("Initial positions")
-
-    st.session_state.positions = position_editor_fallback(st.session_state.positions)
-
     if reset_clicked or st.session_state.bodies is None:
         st.session_state.bodies = build_bodies_from_ui(
             [star1, star2, star3],
@@ -577,6 +573,9 @@ def main() -> None:
         key="simulation_plot_final",
     )
     render_state_panel(state_placeholder, bodies, st.session_state.times[frame_index])
+
+    st.subheader("Initial positions")
+    st.session_state.positions = position_editor_fallback(st.session_state.positions)
 
 
 if __name__ == "__main__":
