@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import math
+import time
 from dataclasses import dataclass
 from typing import Dict, List, Tuple
 
@@ -149,7 +150,7 @@ def compute_history(
     n_steps: int,
     dt: float,
     softening: float = 1e-6,
-) -> Dict[str, np.ndarray]:
+) -> Tuple[Dict[str, np.ndarray], Dict[str, np.ndarray], np.ndarray]:
     """
     Returns arrays of shape (n_steps + 1, 2) for each body.
     """
@@ -158,13 +159,22 @@ def compute_history(
         for b in bodies
     ]
 
-    history = {b.name: [b.position.copy()] for b in work}
+    position_history = {b.name: [b.position.copy()] for b in work}
+    velocity_history = {b.name: [b.velocity.copy()] for b in work}
+    times = [0.0]
+
     for _ in range(n_steps):
         leapfrog_step(work, dt, softening=softening)
         for b in work:
-            history[b.name].append(b.position.copy())
+            position_history[b.name].append(b.position.copy())
+            velocity_history[b.name].append(b.velocity.copy())
+        times.append(times[-1] + dt)
 
-    return {k: np.asarray(v, dtype=float) for k, v in history.items()}
+    return (
+        {k: np.asarray(v, dtype=float) for k, v in position_history.items()},
+        {k: np.asarray(v, dtype=float) for k, v in velocity_history.items()},
+        np.asarray(times, dtype=float),
+    )
 
 
 # -----------------------------------------------------------------------------
@@ -240,6 +250,7 @@ def make_figure(
     bodies: List[Body],
     history: Dict[str, np.ndarray],
     show_osculating: bool,
+    frame_index: int | None = None,
 ) -> go.Figure:
     fig = go.Figure()
     colors = {
@@ -249,9 +260,13 @@ def make_figure(
         "Planet": "#1f77b4",
     }
 
+    if frame_index is None:
+        frame_index = len(next(iter(history.values()))) - 1
+
     # Trajectories and current markers
     for b in bodies:
-        traj = history[b.name]
+        traj = history[b.name][: frame_index + 1]
+        current = traj[-1]
         fig.add_trace(
             go.Scatter(
                 x=traj[:, 0],
@@ -264,8 +279,8 @@ def make_figure(
         )
         fig.add_trace(
             go.Scatter(
-                x=[traj[-1, 0]],
-                y=[traj[-1, 1]],
+                x=[current[0]],
+                y=[current[1]],
                 mode="markers+text",
                 name=b.name,
                 text=[b.name],
@@ -343,6 +358,10 @@ def init_state() -> None:
         st.session_state.initialized = False
     if "history" not in st.session_state:
         st.session_state.history = None
+    if "velocity_history" not in st.session_state:
+        st.session_state.velocity_history = None
+    if "times" not in st.session_state:
+        st.session_state.times = None
     if "bodies" not in st.session_state:
         st.session_state.bodies = None
 
@@ -364,6 +383,50 @@ def build_bodies_from_ui(
     ]
     auto_generate_velocities(bodies, spin=spin)
     return bodies
+
+
+def bodies_at_frame(
+    template_bodies: List[Body],
+    position_history: Dict[str, np.ndarray],
+    velocity_history: Dict[str, np.ndarray],
+    frame_index: int,
+) -> List[Body]:
+    return [
+        Body(
+            name=b.name,
+            mass_msun=b.mass_msun,
+            position=position_history[b.name][frame_index].copy(),
+            velocity=velocity_history[b.name][frame_index].copy(),
+        )
+        for b in template_bodies
+    ]
+
+
+def render_state_panel(container, bodies: List[Body], current_time: float) -> None:
+    with container.container():
+        st.subheader("Current state")
+        st.caption(f"Time = {current_time:.4f} yr")
+
+        table_rows = []
+        for b in bodies:
+            table_rows.append(
+                {
+                    "Body": b.name,
+                    "Mass [Msun]": b.mass_msun,
+                    "x [AU]": float(b.position[0]),
+                    "y [AU]": float(b.position[1]),
+                    "vx [AU/yr]": float(b.velocity[0]),
+                    "vy [AU/yr]": float(b.velocity[1]),
+                }
+            )
+        st.dataframe(table_rows, use_container_width=True, hide_index=True)
+
+        st.subheader("Notes")
+        st.markdown(
+            "- The osculating orbit overlay is a two-body approximation around a chosen reference center.\n"
+            "- The simulation uses a leapfrog integrator for the current 4-body system.\n"
+            "- The initial velocity field is a heuristic starting configuration."
+        )
 
 
 def position_editor_fallback(positions: Dict[str, np.ndarray]) -> Dict[str, np.ndarray]:
@@ -403,6 +466,7 @@ def main() -> None:
         st.header("Simulation controls")
         dt = st.number_input("Time step [yr]", min_value=1e-5, value=0.001, step=0.001, format="%.5f")
         n_steps = st.number_input("Steps per run", min_value=10, value=500, step=10)
+        frame_delay_ms = st.slider("Frame delay [ms]", min_value=10, max_value=200, value=30, step=10)
         spin = st.slider("Initial spin direction", min_value=-1.0, max_value=1.0, value=1.0, step=1.0)
         softening = st.number_input("Softening length [AU]", min_value=1e-8, value=1e-4, step=1e-4, format="%.6f")
         show_osculating = st.checkbox("Show osculating orbits", value=True)
@@ -432,58 +496,79 @@ def main() -> None:
             spin=spin,
         )
         st.session_state.history = None
+        st.session_state.velocity_history = None
+        st.session_state.times = None
         st.session_state.initialized = True
+
+    plot_col, state_col = st.columns([2, 1])
+    plot_placeholder = plot_col.empty()
+    state_placeholder = state_col.empty()
 
     if run_clicked:
         # Rebuild bodies from the current inputs and run the simulation.
-        st.session_state.bodies = build_bodies_from_ui(
+        initial_bodies = build_bodies_from_ui(
             [star1, star2, star3],
             planet,
             st.session_state.positions,
             spin=spin,
         )
-        st.session_state.history = compute_history(
-            st.session_state.bodies,
+        st.session_state.bodies = initial_bodies
+        st.session_state.history, st.session_state.velocity_history, st.session_state.times = compute_history(
+            initial_bodies,
             n_steps=int(n_steps),
             dt=float(dt),
             softening=float(softening),
+        )
+        frame_delay_s = float(frame_delay_ms) / 1000.0
+
+        for frame_index in range(len(st.session_state.times)):
+            frame_bodies = bodies_at_frame(
+                initial_bodies,
+                st.session_state.history,
+                st.session_state.velocity_history,
+                frame_index,
+            )
+            fig = make_figure(
+                frame_bodies,
+                st.session_state.history,
+                show_osculating=show_osculating,
+                frame_index=frame_index,
+            )
+            plot_placeholder.plotly_chart(fig, use_container_width=True)
+            render_state_panel(state_placeholder, frame_bodies, st.session_state.times[frame_index])
+
+            if frame_index < len(st.session_state.times) - 1:
+                time.sleep(frame_delay_s)
+
+        st.session_state.bodies = bodies_at_frame(
+            initial_bodies,
+            st.session_state.history,
+            st.session_state.velocity_history,
+            len(st.session_state.times) - 1,
         )
 
     # If no simulation has been run yet, show a single-frame "history".
     if st.session_state.history is None:
         bodies = st.session_state.bodies
         st.session_state.history = {b.name: np.vstack([b.position.copy()]) for b in bodies}
+        st.session_state.velocity_history = {b.name: np.vstack([b.velocity.copy()]) for b in bodies}
+        st.session_state.times = np.asarray([0.0], dtype=float)
 
-    bodies = st.session_state.bodies
-    history = st.session_state.history
-
-    left, right = st.columns([2, 1])
-    with left:
-        fig = make_figure(bodies, history, show_osculating=show_osculating)
-        st.plotly_chart(fig, use_container_width=True)
-
-    with right:
-        st.subheader("Current state")
-        table_rows = []
-        for b in bodies:
-            table_rows.append(
-                {
-                    "Body": b.name,
-                    "Mass [Msun]": b.mass_msun,
-                    "x [AU]": float(b.position[0]),
-                    "y [AU]": float(b.position[1]),
-                    "vx [AU/yr]": float(b.velocity[0]),
-                    "vy [AU/yr]": float(b.velocity[1]),
-                }
-            )
-        st.dataframe(table_rows, use_container_width=True, hide_index=True)
-
-        st.subheader("Notes")
-        st.markdown(
-            "- The osculating orbit overlay is a two-body approximation around a chosen reference center.\n"
-            "- The simulation uses a leapfrog integrator for the current 4-body system.\n"
-            "- The initial velocity field is a heuristic starting configuration."
-        )
+    frame_index = len(st.session_state.times) - 1
+    bodies = bodies_at_frame(
+        st.session_state.bodies,
+        st.session_state.history,
+        st.session_state.velocity_history,
+        frame_index,
+    )
+    fig = make_figure(
+        bodies,
+        st.session_state.history,
+        show_osculating=show_osculating,
+        frame_index=frame_index,
+    )
+    plot_placeholder.plotly_chart(fig, use_container_width=True)
+    render_state_panel(state_placeholder, bodies, st.session_state.times[frame_index])
 
 
 if __name__ == "__main__":
