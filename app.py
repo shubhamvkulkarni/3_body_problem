@@ -472,9 +472,7 @@ def main() -> None:
         show_osculating = st.checkbox("Show osculating orbits", value=True)
         preserve_positions_on_reset = st.checkbox("Keep edited positions after reset", value=True)
 
-        col_a, col_b = st.columns(2)
-        run_clicked = col_a.button("Run / Advance")
-        reset_clicked = col_b.button("Reset")
+        reset_clicked = st.button("Reset")
 
     default_pos = default_positions()
 
@@ -498,6 +496,8 @@ def main() -> None:
 
     plot_col, state_col = st.columns([2, 1])
     plot_placeholder = plot_col.empty()
+    with state_col:
+        run_clicked = st.button("Run / Advance")
     state_placeholder = state_col.empty()
 
     if run_clicked:
