@@ -358,23 +358,50 @@ def make_figure(
     axis_half_range = half_span + padding
 
     fig.update_layout(
-        template="plotly_white",
+        template="plotly_dark",
         height=700,
         margin=dict(l=20, r=20, t=20, b=20),
         dragmode=False,
+        paper_bgcolor="#000000",
+        plot_bgcolor="#050505",
+        font=dict(color="#f5f5f5"),
         xaxis=dict(
             title="x [AU]",
             scaleanchor="y",
             scaleratio=1,
             range=[x_mid - axis_half_range, x_mid + axis_half_range],
             fixedrange=True,
+            showgrid=True,
+            gridcolor="rgba(255,255,255,0.10)",
+            zeroline=True,
+            zerolinecolor="rgba(255,255,255,0.18)",
+            linecolor="rgba(255,255,255,0.28)",
         ),
         yaxis=dict(
             title="y [AU]",
             range=[y_mid - axis_half_range, y_mid + axis_half_range],
             fixedrange=True,
+            showgrid=True,
+            gridcolor="rgba(255,255,255,0.10)",
+            zeroline=True,
+            zerolinecolor="rgba(255,255,255,0.18)",
+            linecolor="rgba(255,255,255,0.28)",
         ),
-        legend=dict(orientation="h"),
+        legend=dict(
+            orientation="h",
+            bgcolor="rgba(17,17,17,0.85)",
+            bordercolor="rgba(255,255,255,0.10)",
+            borderwidth=1,
+            yanchor="bottom",
+            y=1.02,
+            xanchor="left",
+            x=0.0,
+        ),
+        hoverlabel=dict(
+            bgcolor="#111111",
+            bordercolor="rgba(255,255,255,0.15)",
+            font=dict(color="#f5f5f5"),
+        ),
     )
     return fig
 
