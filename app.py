@@ -273,6 +273,7 @@ def make_figure(
                 y=traj[:, 1],
                 mode="lines",
                 name=f"{b.name} trail",
+                showlegend=False,
                 line=dict(width=2, color=colors.get(b.name, None)),
                 hoverinfo="skip",
             )
@@ -330,14 +331,15 @@ def make_figure(
             if pts.size > 0:
                 fig.add_trace(
                     go.Scatter(
-                        x=pts[:, 0],
-                        y=pts[:, 1],
-                        mode="lines",
-                        name=f"{b.name} osculating orbit",
-                        line=dict(width=1, dash="dot", color=colors.get(b.name, None)),
-                        hoverinfo="skip",
-                    )
-                )
+                x=pts[:, 0],
+                y=pts[:, 1],
+                mode="lines",
+                name=f"{b.name} osculating orbit",
+                showlegend=False,
+                line=dict(width=1, dash="dot", color=colors.get(b.name, None)),
+                hoverinfo="skip",
+            )
+        )
 
     fig.update_layout(
         template="plotly_white",
