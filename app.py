@@ -534,7 +534,11 @@ def main() -> None:
                 show_osculating=show_osculating,
                 frame_index=frame_index,
             )
-            plot_placeholder.plotly_chart(fig, use_container_width=True)
+            plot_placeholder.plotly_chart(
+                fig,
+                use_container_width=True,
+                key=f"simulation_plot_{frame_index}",
+            )
             render_state_panel(state_placeholder, frame_bodies, st.session_state.times[frame_index])
 
             if frame_index < len(st.session_state.times) - 1:
@@ -567,7 +571,11 @@ def main() -> None:
         show_osculating=show_osculating,
         frame_index=frame_index,
     )
-    plot_placeholder.plotly_chart(fig, use_container_width=True)
+    plot_placeholder.plotly_chart(
+        fig,
+        use_container_width=True,
+        key="simulation_plot_final",
+    )
     render_state_panel(state_placeholder, bodies, st.session_state.times[frame_index])
 
 
