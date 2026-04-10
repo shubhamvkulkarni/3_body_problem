@@ -478,15 +478,12 @@ def main() -> None:
     st.set_page_config(page_title="Triple-Star + Planet Simulator", layout="wide")
     init_state()
 
-    header_col, run_col, reset_col = st.columns([7, 1, 1], gap="small")
+    header_col, run_col = st.columns([8, 1], gap="small")
     with header_col:
         st.markdown("## Triple-Star + Planet Motion Simulator")
     with run_col:
         st.write("")
         run_clicked = st.button("Run")
-    with reset_col:
-        st.write("")
-        reset_clicked = st.button("Reset")
 
     st.write(
         "A 2D Newtonian 4-body prototype with three stars, one planet, live trajectories, "
@@ -509,6 +506,7 @@ def main() -> None:
         softening = st.number_input("Softening length [AU]", min_value=1e-8, value=1e-4, step=1e-4, format="%.6f")
         show_osculating = st.checkbox("Show osculating orbits", value=True)
         preserve_positions_on_reset = st.checkbox("Keep edited positions after reset", value=True)
+        reset_clicked = st.button("Reset")
 
     default_pos = default_positions()
 
