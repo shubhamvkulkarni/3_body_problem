@@ -524,6 +524,26 @@ def main() -> None:
     st.set_page_config(page_title="Triple-Star + Planet Simulator", layout="wide")
     init_state()
 
+    st.markdown(
+        """
+        <style>
+        div[data-testid="stHorizontalBlock"] > div:nth-child(2) div[data-testid="stButton"] > button {
+            background: #f3f4f6;
+            color: #0b0b0b;
+            border: 1px solid #ffffff;
+            font-weight: 600;
+        }
+
+        div[data-testid="stHorizontalBlock"] > div:nth-child(2) div[data-testid="stButton"] > button:hover {
+            background: #ffffff;
+            color: #000000;
+            border-color: #ffffff;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
     header_col, run_col = st.columns([8, 1], gap="small")
     with header_col:
         st.markdown("## Triple-Star + Planet Motion Simulator")
