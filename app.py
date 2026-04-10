@@ -465,8 +465,8 @@ def main() -> None:
 
         st.header("Simulation controls")
         dt = st.number_input("Time step [yr]", min_value=1e-5, value=0.001, step=0.001, format="%.5f")
-        n_steps = st.number_input("Steps per run", min_value=10, value=500, step=10)
-        frame_delay_ms = st.slider("Frame delay [ms]", min_value=10, max_value=200, value=30, step=10)
+        n_steps = st.number_input("Steps per run", min_value=10, value=250, step=10)
+        frame_delay_ms = st.slider("Frame delay [ms]", min_value=10, max_value=200, value=60, step=10)
         spin = st.slider("Initial spin direction", min_value=-1.0, max_value=1.0, value=1.0, step=1.0)
         softening = st.number_input("Softening length [AU]", min_value=1e-8, value=1e-4, step=1e-4, format="%.6f")
         show_osculating = st.checkbox("Show osculating orbits", value=True)
