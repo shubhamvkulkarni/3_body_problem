@@ -253,6 +253,7 @@ def make_figure(
     frame_index: int | None = None,
 ) -> go.Figure:
     fig = go.Figure()
+    plot_points: List[np.ndarray] = []
     colors = {
         "Star 1": "#d62728",
         "Star 2": "#ff7f0e",
@@ -267,6 +268,7 @@ def make_figure(
     for b in bodies:
         traj = history[b.name][: frame_index + 1]
         current = traj[-1]
+        plot_points.append(traj)
         fig.add_trace(
             go.Scatter(
                 x=traj[:, 0],
@@ -293,6 +295,7 @@ def make_figure(
 
     # Barycenter
     r_cm, _ = barycenter_state(bodies)
+    plot_points.append(np.asarray([[r_cm[0], r_cm[1]]], dtype=float))
     fig.add_trace(
         go.Scatter(
             x=[r_cm[0]],
@@ -329,24 +332,48 @@ def make_figure(
             elems = orbital_elements_2d(r_rel, v_rel, mu)
             pts = osculating_ellipse_points(r_ref, elems)
             if pts.size > 0:
+                plot_points.append(pts)
                 fig.add_trace(
                     go.Scatter(
-                x=pts[:, 0],
-                y=pts[:, 1],
-                mode="lines",
-                name=f"{b.name} osculating orbit",
-                showlegend=False,
-                line=dict(width=1, dash="dot", color=colors.get(b.name, None)),
-                hoverinfo="skip",
-            )
-        )
+                        x=pts[:, 0],
+                        y=pts[:, 1],
+                        mode="lines",
+                        name=f"{b.name} osculating orbit",
+                        showlegend=False,
+                        line=dict(width=1, dash="dot", color=colors.get(b.name, None)),
+                        hoverinfo="skip",
+                    )
+                )
+
+    xy = np.vstack(plot_points)
+    x_min = float(np.min(xy[:, 0]))
+    x_max = float(np.max(xy[:, 0]))
+    y_min = float(np.min(xy[:, 1]))
+    y_max = float(np.max(xy[:, 1]))
+
+    x_mid = 0.5 * (x_min + x_max)
+    y_mid = 0.5 * (y_min + y_max)
+    half_span = 0.5 * max(x_max - x_min, y_max - y_min, 1e-3)
+    padding = max(0.1 * half_span, 0.05)
+    axis_half_range = half_span + padding
 
     fig.update_layout(
         template="plotly_white",
         height=700,
         margin=dict(l=20, r=20, t=20, b=20),
-        xaxis=dict(scaleanchor="y", scaleratio=1, title="x [AU]"),
-        yaxis=dict(title="y [AU]"),
+        dragmode=False,
+        xaxis=dict(
+            title="x [AU]",
+            scaleanchor="y",
+            scaleratio=1,
+            range=[x_mid - axis_half_range, x_mid + axis_half_range],
+            fixedrange=True,
+        ),
+        yaxis=dict(
+            title="y [AU]",
+            range=[y_mid - axis_half_range, y_mid + axis_half_range],
+            fixedrange=True,
+        ),
         legend=dict(orientation="h"),
     )
     return fig
@@ -536,6 +563,7 @@ def main() -> None:
                 fig,
                 use_container_width=True,
                 key=f"simulation_plot_{frame_index}",
+                config={"displayModeBar": False, "scrollZoom": False},
             )
             render_state_panel(state_placeholder, frame_bodies, st.session_state.times[frame_index])
 
@@ -573,6 +601,7 @@ def main() -> None:
         fig,
         use_container_width=True,
         key="simulation_plot_final",
+        config={"displayModeBar": False, "scrollZoom": False},
     )
     render_state_panel(state_placeholder, bodies, st.session_state.times[frame_index])
 
