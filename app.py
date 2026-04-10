@@ -478,16 +478,15 @@ def main() -> None:
     st.set_page_config(page_title="Triple-Star + Planet Simulator", layout="wide")
     init_state()
 
-    header_col, controls_col = st.columns([6, 2])
+    header_col, run_col, reset_col = st.columns([7, 1, 1], gap="small")
     with header_col:
         st.markdown("## Triple-Star + Planet Motion Simulator")
-    with controls_col:
+    with run_col:
         st.write("")
-        run_col, reset_col = st.columns(2)
-        with run_col:
-            run_clicked = st.button("Run", use_container_width=True)
-        with reset_col:
-            reset_clicked = st.button("Reset", use_container_width=True)
+        run_clicked = st.button("Run")
+    with reset_col:
+        st.write("")
+        reset_clicked = st.button("Reset")
 
     st.write(
         "A 2D Newtonian 4-body prototype with three stars, one planet, live trajectories, "
